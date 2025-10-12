@@ -20,6 +20,8 @@ This project demonstrates an automated build and deployment pipeline for Java we
 - **JFrog Artifactory:** Acts as an artifact repository to store build artifacts.
 - **Tomcat:** Deployment server for hosting Java web applications.
 
+![Pipeline Screenshot](DevOPs_Project_Tomcat.jpg)
+
 ## Jenkins Pipeline Implementation
 - Used both Jenkins Freestyle projects and Pipelines (Declarative and Scripted).
 - Blue Ocean plugin used for enhanced pipeline visualization.
