@@ -1,0 +1,351 @@
+============================================================================================================================
+PROJECT: VM based Build and Deploy Pipeline project via Tomcat:
+=============================================================================================================================
+Integration with Github, Maven, SonarQube, Jfrog and Tomcat with Jenkins.
+   a. Jenkins free style project - Build Pipeline and Delivery Pipeline Project
+   b. Jenkins Pipelines - Declarative and Scripted Pipelines.
+
+
+------------------------------------------------------------
+Machine Requirement:
+------------------------------------------------------------
+Machine-1: Jenkins Master - t2.medium - 2 vcpu and 4 GB RAM
+           * Java-21*
+           * Jenkins Package
+           * Git
+
+Machine-2: Jenkins Slave -  t2.medium - 2 vcpu and 4 GB RAM
+           * Java-21
+           * Slave Integration with Jenkins
+           * Git 
+           * Maven
+
+   Note: All installation should be performed via jenkins user
+
+Machine-3: SonarQube and Tomcat - t2.medium - 2 vcpu and 4 GB RAM
+           * Java-21*
+           * SonarQube Package
+           * Tomcat Package
+
+Machine-4: Jfrog Artifactory - t2.medium - 2 vcpu and 4 GB RAM
+           * Java-21*
+           * Jfrog Package
+-----------------------------------------------------------------------------------------------------------------------
+Integration with Github, Maven, SonarQube, Jfrog and Tomcat with Jenkins:
+-----------------------------------------------------------------------------------------------------------------------
+a. Jenkins Integration with Github
+-------------------------------------------------------------------------------------------------------------------
+     * Install git tool in Jenkins Master & slave
+
+     * Install plugin in Jenkins GUI
+          * Plugin installation : GitHub plugin(by default)
+
+     * Configure the github settings - manage jenkins - system and Tools
+           * system and Tools configuration:
+              git: default
+              path: git
+
+     * Create an Job for github checkout activity and configure the plugin settings
+        * Job Configuration: 
+            Source Code Management : git
+------------------------------------------------------------
+b. Jenkins Integration with Maven
+     * Install Maven tool in Jenkins slave
+
+     * Install plugin in Jenkins GUI
+     * Plugin installation:
+       - Maven Integration
+       - Pipeline Maven Integration
+
+     * Configure the Maven settings - manage jenkins - system and Tools
+     * system and Tools configuration
+           name: MAVEN_HOME
+           path: /opt/maven
+
+     * Create an Job for Maven Build activity and configure the plugin settings
+     * Job Configuration
+      * Build Steps:
+              Invoke top-level Maven targets?
+                 Maven Version:  MAVEN_HOME
+                 Goals: clean install
+                 Advanced 
+                       POM: pom.xml
+
+--------------------------------------------------------------------------------------
+c. Jenkins Integration with SonarQube:
+--------------------------------------------------------------------------------------
+     * Install SonarQube tool in separate machine:
+
+     * Install plugin in Jenkins GUI: SonarQube scanner
+
+     * Configure the SonarQube settings - manage jenkins - system and Tools
+     * system and Tools configuration
+       - system: 
+         *SonarQube installations
+              Name: SONAR_HOME
+              Server URL :http://3.144.201.227:9000
+              Server authentication token
+       - Tools configuration:
+               SonarQube Scanner installations
+                Add SonarQube Scanner
+                SonarQube Scanner
+                Name : SONAR_SCANNER
+                Install automatically ? Install from Maven Central 
+                Version SonarQube Scanner 4.4.0.2170
+
+     * Create an Job for SonarQube Build activity and configure the plugin settings
+       * Job Configuration: 
+             Create - Code_Analysis Job
+
+----------------------------------------------
+sonar-project.properties
+----------------------------------------------
+sonar.host.url=http://3.108.40.179:9000
+sonar.projectKey=Pipeline:project
+sonar.projectName=Pipeline-project
+sonar.projectVersion=1.0
+sonar.sources=./
+sonar.java.binaries=.
+sonar.sourceEncoding=UTF-8
+sonar.login=< sonarqupe authentication token >
+-----------------------------------------------------------------------------------------
+d. Jenkins Integration with Jfrog:
+--------------------------------------------------------------------------------------
+     * Install Jfrog tool in separate machine
+
+     * Install plugin in Jenkins GUI -  artifactory
+
+     * Configure the Jfrog settings - manage jenkins - system and Tools(N/A)
+
+     * Create an Job for Jfrog Build activity and configure the plugin settings
+            Create - Artifact_Upload_Job
+-----------------------------------------------------------------------------------------
+e. Jenkins Integration with Tomcat:
+--------------------------------------------------------------------------------------
+     * Install Tomcat tool in separate machine.
+
+     * Install plugin in Jenkins GUI - Deploy to container
+
+     * Configure the Tomcat settings - manage jenkins - system and Tools - N/A
+
+
+     * Create an Job for Tomcat Build activity and configure the plugin settings
+
+* Job Configuration
+     Post-build Actions -> deploy war/ear to container
+           -> WAR/EAR files -> Target/*.war
+           -> Context path  -> /demoproject
+           -> Containers -> add containers -> apache tomat 7 
+           -> credentials -> admin/admin
+           -> tomcat url  -> http://IP:8080/8082
+
+============================================================================================================================
+a. Jenkins free style project - Build Pipeline and Delivery Pipeline Project
+=============================================================================================================================
+Free Style Pipeline : These pipelines are created directly from Jenkins GUI with help of plugins and configuration done inside the free style jobs.
+   We have create all free style manually and then chain the jobs for running them in sequuential order.
+   And then use below Pipeline plugins to proper visualization.
+   *  Build Pipeline plugin
+   *  Delivery Pipeline Plugin
+
+Drawbacks:
+  * Time taking process for creating free style jobs
+  * High chances of data loss - Job deletion/Jenkins crashed
+  * NO tracking on jobs created.
+  * Migrating jenkins - manual setup or configure jobs
+  * For checking logs, we need to switch multiple jobs
+=============================================================================================================================
+   b. Jenkins Pipelines - Declarative and Scripted Pipelines.
+=============================================================================================================================
+Jenkinsfile - stores all job configuration - > Github - Tracking
+                                                  -> Easy modification can be performed via Github
+                                                  -> Plugins configuration changes are taken via Jenkinsfile confiuguration.
+
+Default Jenkinsfile naming convention: Jenkinsfile
+
+A pipeline is a group of events interlinked with each other in a sequence. 
+   Here we use pipeline job, which requires a text file called JenkinsFile which is written DSL (domain specific language).
+
+Pipeline:  A pipeline is a user-defined model of a CD pipeline. A pipeline defines an entire build process which includes all the stages for building, testing and running applications etc 
+ Pipeline block is used in declarative pipeline script as key block
+ 
+Node: A node is machine which is part of the Jenkins environment and is capable of executing a pipeline.
+      node block is used in scripted pipeline as key block.
+
+Stage: A stage block defines distinct subset of tasks performed through the entire pipeline ( eg: 'Build', ' Test' ) which is manually used by many plugins to visualize or present the Jenkins pipleine status/progress.
+
+Step: Step is single task. A step tells jenkins  what to do at a particular point of time. 
+We can use multiple steps inside a stage.
+eg: execute the shell commands, execute tools commands etc
+
+Agent : Agent is used for mentioning the slaves and master node for execution of pipeline.
+ 
+
+-------------------------------------------
+TYPES OF JENKINS PIPELINE:
+------------------------------------------- 
+* Declarative Pipeline sript : Declarative pipeline syntax offers an easy way to create pipelines. It contains all the predefined controls for creating the pipelines. 
+
+ 
+syntax:
+
+pipeline {
+     agent any 
+        (OR)
+     agent {
+        node {
+          label 'slave_1'
+        }
+     }
+     stages {
+       stage('checkout') {
+          steps {
+              // statements
+           }
+       }
+       stage('Build') {
+          steps {
+              // statements
+           }
+       }
+       stage('Deploy') {
+          steps {
+              // statements
+           }
+       }
+
+    }
+}
+
+----------------------------------------------------------------------------------------------------------------------------
+* Scripted pipeline :  Scripted pipeline syntax offers less flexibility compared to declarative as we need to write the script from scratch to running pipelines that means we have option to customize pipelines but required logical knowledge to implement complex pipelines.
+
+
+
+syntax:
+
+node {
+     agent any 
+        (OR)
+     agent {
+        node {
+          label 'slave_1'
+        }
+     }
+     stages {
+       stage('checkout') {
+          steps {
+              // statements
+           }
+       }
+       stage('Build') {
+          steps {
+              // statements
+           }
+       }
+       stage('Deploy') {
+          steps {
+              // statements
+           }
+       }
+
+    }
+}
+
+========================================================================================================================
+Jenkinsfile
+========================================================================================================================
+pipeline{
+    agent {
+      node {
+	label 'slave_1'
+    }
+}
+
+    tools {
+         maven 'MAVEN_HOME'
+         jdk 'JAVA_HOME'
+    }
+
+    stages{
+        stage('pre-build step') {
+            steps {
+		sh '''
+                echo "Pre Build Step for Webhook Trigges the pipeline on push event"
+		'''
+	    }
+	}
+        stage('Git Checkout'){
+            steps{
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'github access', url: 'https://github.com/GoudSagar/Hello-World-Code.git']]])
+            }
+        }
+        stage('build'){
+            steps{
+               sh '''
+                mvn package
+                '''
+            }
+        }
+        stage ('Unit Test') {
+	        steps {
+                echo 'Running Unit Testing'
+                sh '''
+                mvn test
+                '''
+             }
+         }
+  
+        stage ('Static Code Analysis') {
+             environment {
+             scannerHome = tool 'SONAR_SCANNER'
+             }
+             steps {
+                echo 'Running Static Code Analysis'
+                 withSonarQubeEnv('SONAR_HOME') {
+                 sh '${scannerHome}/bin/sonar-scanner'
+                 }
+            }
+        }
+	stage('Jfrog Artifact Upload') {
+            steps {
+              rtUpload (
+                serverId: 'artifactory',
+                spec: '''{
+                      "files": [
+                        {
+                          "pattern": "*.war",
+                           "target": "local-snapshots"
+                        }
+                    ]
+                }'''
+              )
+          }
+        }
+        stage ('Tomcat Deployment') {
+           steps {
+             script {
+                 deploy adapters: [tomcat7(credentialsId: 'tomcat-credentials', path: '', url: 'http://52.15.212.198:8080')], contextPath: '/webapp-app', onFailure: false, war: 'webapp/target/webapp.war' 
+                    }
+                  }
+           }
+         stage('post-build step') {
+            steps {
+		sh '''
+                echo "Successfull Pipeline for Tomcat Deployment"
+		'''
+	    }
+	}
+    
+     }
+}
+
+=============================================================================================================================
+
+
+
+
+
+
+
+
